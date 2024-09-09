@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress,  MenuItem, FormControl, InputLabel, Select, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { gql, useMutation, useQuery, useSubscription } from '@apollo/client';
+import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
 import { AttachFile } from '@mui/icons-material';
+import axios from "axios";
 
 const SEND_MESSAGE = gql`
   mutation message($to: String!, $message: String, $file: Upload) {
@@ -34,6 +35,26 @@ const SUBSCRIBE = gql`
     }
 `;
 
+const START_MULTIPART = gql`
+    query multipart($fileName: String!, $contentType: String!) {
+      startMultipart(fileName: $fileName, contentType: $contentType)
+    }
+`;
+
+const GENERATE_MULTIPART = gql`
+    query generate($fileName: String!, $uploadId: String!, $partNumbers: Int!) {
+      generateMultipart(fileName: $fileName, uploadId: $uploadId, partNumbers: $partNumbers)
+    }
+`;
+
+
+const COMPLETE_MULTIPART = gql`
+    mutation complete($fileName: String!, $uploadId: String!, $parts: [PartType!]!, $to: String!) {
+      complete(fileName: $fileName, uploadId: $uploadId, parts: $parts, to: $to)
+    }
+`;
+
+
 function ChatApp() {
   const navigate = useNavigate();
   
@@ -44,6 +65,18 @@ function ChatApp() {
   const token = localStorage.getItem('token');
 
   const [mutateFunction] = useMutation(SEND_MESSAGE, {
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
+  });
+
+  const [start] = useLazyQuery(START_MULTIPART, {
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
+  });
+
+  const [generate] = useLazyQuery(GENERATE_MULTIPART, {
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
+  });
+
+  const [complete] = useMutation(COMPLETE_MULTIPART, {
     context: { headers: { token, "x-apollo-operation-name": "1" } }
   });
 
@@ -58,7 +91,6 @@ function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [reciever, setReciever] = useState('66d6b9e0938bb2bdcdfe231b');
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     if (msg) {
@@ -78,13 +110,63 @@ function ChatApp() {
   }
 
   const handleSendMessage = () => {
-    if ((newMessage.trim() && newMessage.trim() !== "") || selectedFile) {
+    if ((newMessage.trim() && newMessage.trim() !== "")) {
       mutateFunction({
-        variables: { to: reciever, message: newMessage, file: selectedFile },
+        variables: { to: reciever, message: newMessage, file: null },
         context: { headers: { token, "x-apollo-operation-name": "1"} }
       });
       setNewMessage('');
-      setSelectedFile(null);
+    }
+  };
+
+  const handleFileUpload = async (file) => {
+    const totalSize = file.size;
+    const partNumbers = Math.ceil(totalSize / 10000000);
+    
+    const { data: startData } = await start({
+      variables: { fileName: file.name, contentType: file.type },
+    });
+  
+    if (startData && startData.startMultipart) {
+      const { data: generateData } = await generate({
+        variables: { fileName: file.name, uploadId: startData.startMultipart, partNumbers },
+      });
+  
+      const preSignedUrls = generateData?.generateMultipart;
+      if (preSignedUrls) {
+        let parts = [];
+        const uploadPromises = [];
+  
+        for (let i = 0; i < partNumbers; i++) {
+          let start = i * 10000000;
+          let end = Math.min(start + 10000000, totalSize);
+          let chunk = file.slice(start, end);
+          let presignedUrl = preSignedUrls[i];
+  
+          uploadPromises.push(
+            axios.put(presignedUrl, chunk, {
+              headers: {
+                "Content-Type": file.type,
+              },
+            })
+          );
+        }
+  
+        const uploadResponses = await Promise.all(uploadPromises);
+  
+        uploadResponses.forEach((response, i) => {
+          parts.push({
+            etag: response.headers.etag,
+            PartNumber: i + 1,
+          });
+        });
+
+        const { data: completeData } = await complete({
+          variables: { fileName: file.name, uploadId: startData.startMultipart, parts, to: reciever },
+        });
+  
+        console.log(completeData);
+      }
     }
   };
 
@@ -132,7 +214,17 @@ function ChatApp() {
             type="file"
             accept="image/*,video/*"
             onChange={(e)=> {
-              setSelectedFile(e.target.files[0])}
+              const file = e.target.files[0];
+              if(file.size < 10000000){
+                mutateFunction({
+                  variables: { to: reciever, message: '', file },
+                  context: { headers: { token, "x-apollo-operation-name": "1"} }
+                });
+              }
+              else {
+                handleFileUpload(e.target.files[0]);
+              }
+            }
             }
             style={{ display: 'none' }}
             id="file-input"
