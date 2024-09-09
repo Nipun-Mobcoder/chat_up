@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
-import Chat from './ChatOption.jsx';
+import Chat from './Chat.jsx';
 import { ApolloClient, InMemoryCache, ApolloProvider, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
