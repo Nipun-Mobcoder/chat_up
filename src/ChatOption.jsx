@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress,  MenuItem, FormControl, InputLabel, Select } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress,  MenuItem, FormControl, InputLabel, Select, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useMutation, useQuery, useSubscription } from '@apollo/client';
+import { AttachFile } from '@mui/icons-material';
 
 const SEND_MESSAGE = gql`
-  mutation message($to: String!, $message: String) {
-    sendMessage(to: $to, message: $message)
+  mutation message($to: String!, $message: String, $file: Upload) {
+    sendMessage(to: $to, message: $message, file: $file)
   }
 `;
 
@@ -43,7 +44,7 @@ function ChatApp() {
   const token = localStorage.getItem('token');
 
   const [mutateFunction] = useMutation(SEND_MESSAGE, {
-    context: { headers: { token } }
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
   });
 
   const { data: msg, loading: loader } = useQuery(SHOW_MESSAGE, {
@@ -57,6 +58,7 @@ function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [reciever, setReciever] = useState('66d6b9e0938bb2bdcdfe231b');
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     if (msg) {
@@ -76,13 +78,13 @@ function ChatApp() {
   }
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
+    if ((newMessage.trim() && newMessage.trim() !== "") || selectedFile) {
       mutateFunction({
-        variables: { to: reciever, message: newMessage },
-        context: { headers: { token } }
+        variables: { to: reciever, message: newMessage, file: selectedFile },
+        context: { headers: { token, "x-apollo-operation-name": "1"} }
       });
-
       setNewMessage('');
+      setSelectedFile(null);
     }
   };
 
@@ -114,9 +116,6 @@ function ChatApp() {
             </Select>
           </FormControl>
           </Box>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Chat
-          </Typography>
           <Divider sx={{ mb: 2 }} />
           {messages.map((ms, index) => (
             <Box key={index} sx={{ mb: 2 }}>
@@ -128,7 +127,21 @@ function ChatApp() {
           ))}
         </Paper>
 
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderTop: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
+          <input
+            type="file"
+            accept="image/*,video/*"
+            onChange={(e)=> {
+              setSelectedFile(e.target.files[0])}
+            }
+            style={{ display: 'none' }}
+            id="file-input"
+          />
+          <label htmlFor="file-input">
+            <IconButton component="span" sx={{ mr: 2 }}>
+              <AttachFile />
+            </IconButton>
+          </label>
           <TextField
             fullWidth
             variant="outlined"
