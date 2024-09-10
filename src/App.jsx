@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './App.css'
 import {gql, useLazyQuery} from "@apollo/client"
 import {
   Avatar,
