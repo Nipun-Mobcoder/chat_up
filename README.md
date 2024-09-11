@@ -17,7 +17,7 @@ Follow these steps to get the application running locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/chat-up.git
+git clone https://github.com/Nipun-Mobcoder/chat_up.git
 ```
 
 ### 2. Install the package modules
