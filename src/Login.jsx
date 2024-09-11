@@ -15,11 +15,14 @@ import { useNavigate } from 'react-router-dom';
 
 const GET_TOKEN = gql `
   query loginToken($email: String!, $password: String!) {
-    login(email: $email, password: $password)
+    login(email: $email, password: $password) {
+        name
+        token
+    }
   }
 `
 
-function App() {
+function Login() {
   const navigate = useNavigate();
   useEffect(()=> {
     if(localStorage.getItem("token")){
@@ -30,7 +33,7 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const [getToken, { loading, error, data }] = useLazyQuery(GET_TOKEN);
+  const [getToken, { loading, data }] = useLazyQuery(GET_TOKEN);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -41,7 +44,8 @@ function App() {
 
   useEffect(() => {
     if (data) {
-      localStorage.setItem('token', data.login);
+      localStorage.setItem('token', data.login.token);
+      localStorage.setItem('name', data.login.name);
       navigate('/chat');
     }
   }, [data, navigate]);
@@ -105,4 +109,4 @@ function App() {
   );
 }
 
-export default App
+export default Login

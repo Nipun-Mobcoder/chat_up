@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress,  MenuItem, FormControl, InputLabel, Select, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
 import { AttachFile } from '@mui/icons-material';
 import axios from "axios";
+import PropTypes from 'prop-types';
 
 const SEND_MESSAGE = gql`
   mutation message($to: String!, $message: String, $file: Upload) {
@@ -12,8 +13,8 @@ const SEND_MESSAGE = gql`
 `;
 
 const SHOW_MESSAGE = gql`
-    query {
-        messages {
+    query messages($sender: String!) {
+        showUserMessage(sender: $sender) {
             file {
                 url
             }
@@ -25,8 +26,8 @@ const SHOW_MESSAGE = gql`
 `;
 
 const SUBSCRIBE = gql`
-    subscription subscribe($tokenId: String!) {
-        showMessages(tokenId: $tokenId) {
+    subscription subscribe ($tokenId: String!, $userId: String!) {
+        showUsersMessages(tokenId: $tokenId, userId: $userId) {
             file {
                 url
             }
@@ -56,7 +57,7 @@ const COMPLETE_MULTIPART = gql`
 `;
 
 
-function ChatApp() {
+function ChatComponent({curUser}) {
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -82,33 +83,44 @@ function ChatApp() {
   });
 
   const { data: msg, loading: loader } = useQuery(SHOW_MESSAGE, {
+    variables: { sender: curUser },
     context: { headers: { token } }
   });
 
   const { data: subscriptionData } = useSubscription(SUBSCRIBE, {
-    variables: { tokenId: token }
+    variables: { tokenId: token, userId: curUser }
   });
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [reciever, setReciever] = useState('66d6b9e0938bb2bdcdfe231b');
+  const reciever = curUser;
 
   useEffect(() => {
     if (msg) {
-      setMessages(msg.messages);
+      setMessages(msg.showUserMessage);
     }
   }, [msg]);
 
   useEffect(() => {
-    if (subscriptionData && subscriptionData.showMessages) {
+    if (subscriptionData && subscriptionData.showUsersMessages) {
         const date = new Date();
-      const newMessage = {...subscriptionData.showMessages, createdAt: `${date.getHours()}:${date.getMinutes()}`};
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+        const newMessage = {...subscriptionData.showUsersMessages, createdAt: `${date.getHours()}:${date.getMinutes()}`};
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
     }
   }, [subscriptionData]);
 
   if (loader) {
-    return <CircularProgress sx={{ justifyContent: 'center', alignItems: 'center' }} />;
+    return <Box 
+    sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      width: '100%' 
+    }}
+  >
+    <CircularProgress />
+  </Box>;
   }
 
   const handleSendMessage = () => {
@@ -173,7 +185,7 @@ function ChatApp() {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column', }}>
       <Box
         sx={{
           flex: 1,
@@ -182,25 +194,7 @@ function ChatApp() {
           justifyContent: 'space-between'
         }}
       >
-        <Box sx={{position: 'fixed', alignItems: 'flex-start', width: '100%', }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end',}}>
-          <FormControl sx={{ mr: 2, backgroundColor: 'white' }}>
-          <InputLabel id="sending-to">To</InputLabel>
-            <Select
-            labelId='sending-to'
-            id='to'
-            value={reciever}
-            label='To'
-            onChange={(e) => setReciever(e.target.value)}
-            sx={{ mr: 2 }}>
-                <MenuItem value={'66d6b9e0938bb2bdcdfe231b'}>Harsh</MenuItem>
-                <MenuItem value={'66d6b9eb938bb2bdcdfe231d'}>Nipun</MenuItem>
-                <MenuItem value={'66d98e401f67518576761cc4'}>Aditya</MenuItem>
-            </Select>
-          </FormControl>
-          </Box>
-        </Box>
-        <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
+        <Paper elevation={3} sx={{ p: 2, height: '100%', mt: '40px' }}>
 
           <Divider sx={{ mb: 2 }} />
           {messages.map((ms, index) => (
@@ -254,4 +248,8 @@ function ChatApp() {
   );
 }
 
-export default ChatApp;
+ChatComponent.propTypes = {
+    curUser: PropTypes.string.isRequired,
+};
+
+export default ChatComponent;
