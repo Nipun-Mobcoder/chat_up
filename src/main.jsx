@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import App from './App.jsx';
+import Login from './Login.jsx';
 import Chat from './Chat.jsx';
 import { ApolloClient, InMemoryCache, ApolloProvider, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
@@ -7,6 +7,7 @@ import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
+import ChatContainer from './ChatContainer.jsx';
 
 const uploadLink = createUploadLink({
   uri: 'http://localhost:4000/graphql',
@@ -38,11 +39,15 @@ const client = new ApolloClient({
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Login />,
+  },
+  {
+    path: "/chatGroup",
+    element: <Chat />,
   },
   {
     path: "/chat",
-    element: <Chat />,
+    element: <ChatContainer />
   }
 ]);
 

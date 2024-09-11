@@ -1,8 +1,34 @@
-# React + Vite
+# Chat Up - A Real-Time Chat Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to **Chat Up**, a real-time chat application built with Node.js, Express, GraphQL, MongoDB, and React. The app allows users to exchange messages in real-time with the ability to authenticate using JWT tokens and store chat data in a MongoDB database.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Real-Time Messaging** using GraphQL Subscriptions
+- **JWT Authentication** for user verification
+- **MongoDB** for storing user messages
+- **React** frontend for seamless user interaction
+- **Material-UI** for a clean and modern interface
+
+## Installation
+
+Follow these steps to get the application running locally.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Nipun-Mobcoder/chat_up.git
+```
+
+### 2. Install the package modules
+
+```bash
+npm install
+```
+
+### 3. Run the program
+
+```bash
+npm run dev
+```
+
