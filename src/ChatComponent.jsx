@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react';
 import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
-import { AttachFile } from '@mui/icons-material';
+import { AttachFile, Payment } from '@mui/icons-material';
 import axios from "axios";
 import PropTypes from 'prop-types';
+import PaymentForm from './component/PaymentForm';
+import PaymentButton from './component/Payment';
+
+function isImage(url) {
+  const cleanUrl = url.split('?')[0];
+  return /\.(jpg|jpeg|png|gif|bmp|svg)$/i.test(cleanUrl);
+}
 
 const SEND_MESSAGE = gql`
-  mutation message($to: String!, $message: String, $file: Upload) {
+  mutation message($to: ID!, $message: String, $file: Upload) {
     sendMessage(to: $to, message: $message, file: $file)
   }
 `;
@@ -95,6 +102,24 @@ function ChatComponent({curUser}) {
   const [newMessage, setNewMessage] = useState('');
   const reciever = curUser;
 
+  const [showForm, setShowForm] = useState(false);
+  const [formSent, setFormSent] = useState(false);
+
+  const [formData, setFormData] = useState({
+    amount: "",
+    currency: "",
+    toWhom: "",
+  });
+
+
+  const onClose = () => {
+    setShowForm(false)
+  } 
+
+  const handleToggleForm = () => {
+    setShowForm((prev) => !prev);
+  };
+
   useEffect(() => {
     if (msg) {
       setMessages(msg.showUserMessage);
@@ -104,23 +129,23 @@ function ChatComponent({curUser}) {
   useEffect(() => {
     if (subscriptionData && subscriptionData.showUsersMessages) {
         const date = new Date();
-        const newMessage = {...subscriptionData.showUsersMessages, createdAt: `${date.getHours()}:${date.getMinutes()}`};
+        const newMessage = {...subscriptionData.showUsersMessages, createdAt: `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`};
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     }
   }, [subscriptionData]);
 
   if (loader) {
     return <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      width: '100%' 
-    }}
-  >
-    <CircularProgress />
-  </Box>;
+      sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        width: '100%' 
+      }}
+    >
+      <CircularProgress />
+    </Box>;
   }
 
   const handleSendMessage = () => {
@@ -195,16 +220,27 @@ function ChatComponent({curUser}) {
         }}
       >
         <Paper elevation={3} sx={{ p: 2, height: '100%', mt: '40px' }}>
-
           <Divider sx={{ mb: 2 }} />
           {messages.map((ms, index) => (
             <Box key={index} sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: 'gray' }}>
                 {ms.sender} {ms.createdAt}
               </Typography>
-              <Typography variant="body1">{ms.file ? ms.file.url : ms.message}</Typography>
+              <Typography variant="body1">{!ms.file && ms.message}</Typography>
+              {ms?.file ? (
+                !isImage(ms.file.url) ? (
+                  <video width="400" controls>
+                    <source src={ms.file.url} />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <img src={ms.file.url} alt="Uploaded file" />
+                )
+              ) : null}
             </Box>
           ))}
+          {showForm && <PaymentForm onClose={onClose} open={showForm} formData={formData} setFormData={setFormData} setFormSent={setFormSent} />}
+          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom}  />}
         </Paper>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderTop: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
           <input
@@ -231,6 +267,9 @@ function ChatComponent({curUser}) {
               <AttachFile />
             </IconButton>
           </label>
+          <IconButton component="span" sx={{ mr: 2 }} onClick={handleToggleForm}>
+              <Payment />
+          </IconButton>
           <TextField
             fullWidth
             variant="outlined"

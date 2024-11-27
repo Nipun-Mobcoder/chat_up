@@ -1,19 +1,49 @@
 import { Menu as MenuIcon, Logout } from '@mui/icons-material';
-import { Box, Menu, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Typography, MenuItem } from '@mui/material'
-import  { useState } from 'react'
+import { Box, Menu, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Typography, MenuItem, CircularProgress } from '@mui/material'
+import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { gql, useQuery } from '@apollo/client';
 
-const users = [
-    { id: '66d6b9e0938bb2bdcdfe231b', user: 'Harsh' },
-    { id: '66d6b9eb938bb2bdcdfe231d', user: 'Nipun' },
-    { id: '66d98e401f67518576761cc4', user: 'Aditya' },
-]
+const CUR_USER = gql`
+    query CurUser {
+      curUser {
+        id
+        user
+      }
+    }
+`;
 
 const SideBar = ({ curUser, setCurUser }) => {
     const [toggleMenu, setToggleMenu] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+      if (!localStorage.getItem('token')) navigate('/');
+    }, [navigate]);
+
+    const token = localStorage.getItem('token')
+
+    const { data: msg, loading: loader } = useQuery(CUR_USER, {
+      context: { headers: { token, "x-apollo-operation-name": "1" } }
+    });
+
+    if(!loader) var users = msg.curUser;
+
+    if(loader) {
+      return <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          width: '100%' 
+        }}
+      >
+       <CircularProgress />
+     </Box>;
+    }
 
     const drawerList = (
         <Box sx={{ height: "100%", bgcolor: '#3E103F' }}>

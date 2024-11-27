@@ -10,12 +10,12 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import ChatContainer from './ChatContainer.jsx';
 
 const uploadLink = createUploadLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: 'http://localhost:5000/graphql',
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: 'ws://localhost:4000/graphql',
+    url: 'ws://localhost:5000/graphql',
   })
 );
 
