@@ -25,9 +25,11 @@ const SideBar = ({ curUser, setCurUser }) => {
 
     const token = localStorage.getItem('token')
 
-    const { data: msg, loading: loader } = useQuery(CUR_USER, {
+    const { data: msg, loading: loader, error } = useQuery(CUR_USER, {
       context: { headers: { token, "x-apollo-operation-name": "1" } }
     });
+
+    if(error) return <div>Looks like something went wrong.</div>
 
     if(!loader) var users = msg.curUser;
 
