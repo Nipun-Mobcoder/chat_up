@@ -16,8 +16,10 @@ import { useNavigate } from 'react-router-dom';
 const GET_TOKEN = gql `
   query loginToken($email: String!, $password: String!) {
     login(email: $email, password: $password) {
-        name
-        token
+      token
+      name
+      email
+      phoneNumber
     }
   }
 `
@@ -46,6 +48,8 @@ function Login() {
     if (data) {
       localStorage.setItem('token', data.login.token);
       localStorage.setItem('name', data.login.name);
+      localStorage.setItem('email', data.login.email);
+      localStorage.setItem('phoneNumber', data.login.phoneNumber);
       navigate('/chat');
     }
   }, [data, navigate]);

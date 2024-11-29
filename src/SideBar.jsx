@@ -10,6 +10,7 @@ const CUR_USER = gql`
       curUser {
         id
         user
+        cur
       }
     }
 `;
@@ -47,12 +48,16 @@ const SideBar = ({ curUser, setCurUser }) => {
      </Box>;
     }
 
+    const filterUsers = users.filter(user => {
+      return user.cur !== true
+    })
+
     const drawerList = (
         <Box sx={{ height: "100%", bgcolor: '#3E103F' }}>
-        <Box sx={{ width: 250,}} role="presentation" onClick={() => setToggleMenu(false)}>
+          <Box sx={{ width: 250,}} role="presentation" onClick={() => setToggleMenu(false)}>
             <Typography variant='h3' sx={{ p: "10px",color: 'white' }}>Users</Typography>
             <List>
-                {users.map((user) => (
+                {filterUsers.map((user) => (
                 <ListItem key={user.id} disablePadding >
                     <ListItemButton sx={ user.id === curUser ? { m: '5px', backgroundColor: '#2B092A', color: 'white', borderRadius: '10px' } : {m: '5px',color: 'white'}} onClick={() => setCurUser(user.id)}>
                         <ListItemText primary={user.user} />
@@ -60,7 +65,7 @@ const SideBar = ({ curUser, setCurUser }) => {
                 </ListItem>
                 ))}
             </List>
-      </Box>
+          </Box>
         </Box>
     )
 

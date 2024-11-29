@@ -1,8 +1,8 @@
-/* eslint-disable react/prop-types */
 import { gql, useMutation } from "@apollo/client";
 import { CircularProgress } from "@mui/material";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from 'prop-types';
 
 const Create_Order = gql`
   mutation VerifyPayment($amount: String!, $currency: String!, $to: String!) {
@@ -16,12 +16,18 @@ const Create_Order = gql`
 `;
 
 const VERIFY_PAYMENT = gql`
-    mutation VerifyPayment($razorpayOrderId: String!, $razorpayPaymentId: String!, $razorpaySignature: String!, $to: String!, $amount: String!, $currency: String!) {
+    mutation VerifyPayment($razorpayOrderId: String!, $razorpayPaymentId: String!, $razorpaySignature: String!, $to: String!) {
         verifyPayment(razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, razorpaySignature: $razorpaySignature, to: $to, amount: $amount, currency: $currency)
     }
 `;
 
-export default function PaymentButton({ amount, currency, whom }) {
+const PAYMENT_FAIL = gql`
+    mutation Mutation($paymentOrderId: String!) {
+        paymentFailure(paymentOrderId: $paymentOrderId)
+    }
+`;
+
+export default function PaymentButton({ amount, currency, whom, setFormSent }) {
     amount = `${amount * 100}`;
     const navigate = useNavigate();
   
@@ -39,7 +45,13 @@ export default function PaymentButton({ amount, currency, whom }) {
         context: { headers: { token, "x-apollo-operation-name": "1" } }
     });
 
+    const [paymentFailFunction, {error: err}] = useMutation(PAYMENT_FAIL, {
+        context: { headers: { token, "x-apollo-operation-name": "1" } }
+    });
+
     const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+    const phoneNumber = localStorage.getItem('phoneNumber');
     
     const RAZORPAY_KEY_ID = import.meta.env.REACT_APP_RAZORPAY_KEY_ID;
     
@@ -73,23 +85,29 @@ export default function PaymentButton({ amount, currency, whom }) {
                                     razorpayOrderId: response.razorpay_order_id,
                                     razorpayPaymentId: response.razorpay_payment_id,
                                     razorpaySignature: response.razorpay_signature,
-                                    to: whom,
-                                    amount,
-                                    currency
+                                    to: whom
                                 },
                                 context: { headers: { token, "x-apollo-operation-name": "1"} }
                             });
                             alert("Payment successful!");
-                            if(error) alert("Payment failed: " + error.message);
+                            setFormSent(false);
+                            if(error) {
+                                setFormSent(false);
+                                alert("Payment failed: " + error.message);
+                            }
                         } 
                         catch (err) {
+                            await paymentFailFunction({
+                                variables: { paymentOrderId: order.id },
+                                context: { headers: { token, "x-apollo-operation-name": "1"} }
+                            });
                             alert("Payment failed: " + err.message);
                         }
                     },
                     prefill: {
                         name,
-                        email: "john@example.com",
-                        contact: "9999999999",
+                        email,
+                        contact: phoneNumber,
                     },
                     notes: {
                         address: "Razorpay Corporate Office",
@@ -97,6 +115,15 @@ export default function PaymentButton({ amount, currency, whom }) {
                     theme: {
                         color: "#3399cc",
                     },
+                    modal: {
+                        ondismiss: async () => {
+                            await paymentFailFunction({
+                                variables: { paymentOrderId: order.id },
+                                context: { headers: { token, "x-apollo-operation-name": "1"} }
+                            });
+                            setFormSent(false);
+                        }
+                    }
                 };
                 if (!window.Razorpay) {
                     const script = document.createElement("script");
@@ -111,7 +138,9 @@ export default function PaymentButton({ amount, currency, whom }) {
                     const rzpay = new window.Razorpay(options);
                     rzpay.open();
                   }
+                  setFormSent(false);
                 } catch (err) {
+                    setFormSent(false);
                     alert("Error creating order: " + err.message);
                 }
             };
@@ -119,10 +148,22 @@ export default function PaymentButton({ amount, currency, whom }) {
             if(data)
                 handlePayment();
 
-    }, [RAZORPAY_KEY_ID, amount, currency, data, error, name, token, verifyFunction, whom])
+    }, [RAZORPAY_KEY_ID, amount, currency, data, email, error, mutateFunction, name, paymentFailFunction, phoneNumber, setFormSent, token, verifyFunction, whom])
 
+    if(err || error) {
+        setFormSent(false);
+        alert("Payment failed: " + ( error.message || err.message ));
+    }
 
     if(loading) return <CircularProgress sx={{ justifyContent: 'center', alignItems: 'center' }} />;
 
     return <div></div>;
 }
+
+
+PaymentButton.propTypes = {
+    amount: PropTypes.string.isRequired, 
+    currency: PropTypes.string.isRequired, 
+    whom: PropTypes.string.isRequired,
+    setFormSent: PropTypes.func.isRequired
+};

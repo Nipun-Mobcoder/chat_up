@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useEffect } from "react";
 import {
   TextField,
@@ -7,61 +6,22 @@ import {
   FormControl,
   InputLabel,
   Button,
-  Box,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
   DialogActions,
 } from "@mui/material";
-import { gql, useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
-
-const CUR_USER = gql`
-  query CurUser {
-    curUser {
-      id
-      user
-    }
-  }
-`;
+import PropTypes from 'prop-types';
 
 const PaymentForm = ({ open, onClose, formData, setFormData, setFormSent }) => {
-
-
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!localStorage.getItem("token")) navigate("/");
   }, [navigate]);
 
-  const token = localStorage.getItem("token");
-
-  const { data: msg, loading: loader } = useQuery(CUR_USER, {
-    context: { headers: { token, "x-apollo-operation-name": "1" } },
-  });
-
-  if (loader) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          width: "100%",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  const { curUser } = msg;
-  const users = curUser.map((user) => user.id);
-
   const currencies = ["USD", "EUR", "INR", "JPY"];
-  const recipients = users;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -109,23 +69,6 @@ const PaymentForm = ({ open, onClose, formData, setFormData, setFormSent }) => {
               ))}
             </Select>
           </FormControl>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="toWhom-label">To Whom</InputLabel>
-            <Select
-              labelId="toWhom-label"
-              name="toWhom"
-              value={formData.toWhom}
-              onChange={handleChange}
-              required
-            >
-              {recipients.map((recipient) => (
-                <MenuItem key={recipient} value={recipient}>
-                  {recipient}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </form>
       </DialogContent>
       <DialogActions>
@@ -143,6 +86,15 @@ const PaymentForm = ({ open, onClose, formData, setFormData, setFormSent }) => {
       </DialogActions>
     </Dialog>
   );
+};
+
+
+PaymentForm.propTypes = {
+  open: PropTypes.bool.isRequired, 
+  onClose: PropTypes.func.isRequired, 
+  formData: PropTypes.object.isRequired, 
+  setFormData: PropTypes.func.isRequired, 
+  setFormSent: PropTypes.func.isRequired
 };
 
 export default PaymentForm;

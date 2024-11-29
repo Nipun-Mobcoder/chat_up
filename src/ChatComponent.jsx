@@ -108,7 +108,7 @@ function ChatComponent({curUser}) {
   const [formData, setFormData] = useState({
     amount: "",
     currency: "",
-    toWhom: "",
+    toWhom: reciever.toString() || "",
   });
 
 
@@ -240,7 +240,7 @@ function ChatComponent({curUser}) {
             </Box>
           ))}
           {showForm && <PaymentForm onClose={onClose} open={showForm} formData={formData} setFormData={setFormData} setFormSent={setFormSent} />}
-          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom}  />}
+          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom} setFormSent={setFormSent}  />}
         </Paper>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderTop: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
           <input
