@@ -52,6 +52,8 @@ const SideBar = ({ curUser, setCurUser }) => {
       return user.cur !== true
     })
 
+    if(msg && !curUser) setCurUser(filterUsers[0].id);
+
     const drawerList = (
         <Box sx={{ height: "100%", bgcolor: '#3E103F' }}>
           <Box sx={{ width: 250,}} role="presentation" onClick={() => setToggleMenu(false)}>

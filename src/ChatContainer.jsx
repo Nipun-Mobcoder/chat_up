@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import SideBar from './SideBar'
 import ChatComponent from './ChatComponent'
 import { useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
 
 const ChatContainer = () => {
     const navigate = useNavigate();
@@ -11,12 +12,24 @@ const ChatContainer = () => {
     }, [navigate]);
     
     
-    const [curUser, setCurUser] = useState(localStorage.getItem('name') === 'Harsh' ? '66d6b9eb938bb2bdcdfe231d' : '66d6b9e0938bb2bdcdfe231b')
+    const [curUser, setCurUser] = useState('')
     
     return (
         <>
             <SideBar curUser={curUser} setCurUser={setCurUser} />
-            <ChatComponent curUser={curUser} />
+            { curUser && <ChatComponent curUser={curUser} /> }
+            { !curUser && 
+                <Box 
+                    sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        height: '100vh',
+                        width: '100%' 
+                    }}
+                    > 
+                    Please choose the person to contact.
+                </Box> }
         </>
     )
 }

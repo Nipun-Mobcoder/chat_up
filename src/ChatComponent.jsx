@@ -28,6 +28,7 @@ const SHOW_MESSAGE = gql`
             message
             sender
             createdAt
+            date
         }
     }
 `;
@@ -110,7 +111,6 @@ function ChatComponent({curUser}) {
     currency: "",
     toWhom: reciever.toString() || "",
   });
-
 
   const onClose = () => {
     setShowForm(false)
@@ -200,11 +200,9 @@ function ChatComponent({curUser}) {
           });
         });
 
-        const { data: completeData } = await complete({
+        await complete({
           variables: { fileName: file.name, uploadId: startData.startMultipart, parts, to: reciever },
         });
-  
-        console.log(completeData);
       }
     }
   };
@@ -224,7 +222,7 @@ function ChatComponent({curUser}) {
           {messages.map((ms, index) => (
             <Box key={index} sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: 'gray' }}>
-                {ms.sender} {ms.createdAt}
+                {ms.sender} ({ms.date ?? ''}, {ms.createdAt})
               </Typography>
               <Typography variant="body1">{!ms.file && ms.message}</Typography>
               {ms?.file ? (
@@ -240,7 +238,7 @@ function ChatComponent({curUser}) {
             </Box>
           ))}
           {showForm && <PaymentForm onClose={onClose} open={showForm} formData={formData} setFormData={setFormData} setFormSent={setFormSent} />}
-          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom} setFormSent={setFormSent}  />}
+          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom} setFormSent={setFormSent} />}
         </Paper>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderTop: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
           <input
