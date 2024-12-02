@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import SideBar from './SideBar'
-import ChatComponent from './ChatComponent'
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
+
+import SideBar from './SideBar'
+import ChatComponent from './ChatComponent'
 
 const ChatContainer = () => {
     const navigate = useNavigate();

@@ -5,10 +5,10 @@ import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apol
 import { AttachFile, Payment } from '@mui/icons-material';
 import axios from "axios";
 import PropTypes from 'prop-types';
+
 import PaymentForm from './component/PaymentForm';
 import PaymentButton from './component/Payment';
 import PaymentMessage from './component/PaymentMessage';
-// import PaymentMessage from './component/PaymentMessage';
 
 function isImage(url) {
   const cleanUrl = url.split('?')[0];
@@ -227,18 +227,20 @@ function ChatComponent({curUser}) {
           <Divider sx={{ mb: 2 }} />
           {messages.map((ms, index) => (
             <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              my: 2,
-              maxWidth: '100%', // Ensures the message doesn't exceed the parent's width
-            }}
-          >
+              key={index}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: ms.sender === localStorage.getItem('name') ? 'flex-end' : 'flex-start',
+                my: 2,
+                maxWidth: '100%',
+              }}
+            >
             <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
               {ms.sender.charAt(0).toUpperCase()}
             </Avatar>
-            <Stack sx={{ maxWidth: '80%' }}> {/* Stack helps organize text and media */}
+            
+            <Stack sx={{ maxWidth: '80%' }}>
               {!ms.paymentAmount && (
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
                   {ms.sender} ({ms.date ?? ''}, {ms.createdAt})
@@ -248,7 +250,7 @@ function ChatComponent({curUser}) {
                 <Box
                   sx={{
                     maxWidth: '100%',
-                    bgcolor: "#e1f5fe",
+                    bgcolor: ms.sender === localStorage.getItem('name') ?  "#e6fee1" : "#e1f5fe",
                     padding: "8px 12px",
                     borderRadius: "12px",
                     margin: "8px 0",

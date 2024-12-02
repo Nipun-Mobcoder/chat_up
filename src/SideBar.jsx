@@ -1,5 +1,5 @@
 import { Menu as MenuIcon, Logout } from '@mui/icons-material';
-import { Box, Menu, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Typography, MenuItem, CircularProgress } from '@mui/material'
+import { Box, Menu, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Typography, MenuItem, CircularProgress, Avatar } from '@mui/material'
 import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -24,15 +24,25 @@ const SideBar = ({ curUser, setCurUser }) => {
       if (!localStorage.getItem('token')) navigate('/');
     }, [navigate]);
 
+    
     const token = localStorage.getItem('token')
-
+    
     const { data: msg, loading: loader, error } = useQuery(CUR_USER, {
       context: { headers: { token, "x-apollo-operation-name": "1" } }
     });
 
-    if(error) return <div>Looks like something went wrong.</div>
+    if(!loader) {
+      var users = msg.curUser;
+      var filterUsers = users.filter(user => {
+        return user.cur !== true;
+      })
+    }
 
-    if(!loader) var users = msg.curUser;
+    useEffect(()=> {
+      if(msg && !curUser && filterUsers) setCurUser(filterUsers[0].id);
+    }, [curUser, filterUsers, msg, setCurUser])
+
+    if(error) return <div>Looks like something went wrong.</div>
 
     if(loader) {
       return <Box 
@@ -48,12 +58,6 @@ const SideBar = ({ curUser, setCurUser }) => {
      </Box>;
     }
 
-    const filterUsers = users.filter(user => {
-      return user.cur !== true
-    })
-
-    if(msg && !curUser) setCurUser(filterUsers[0].id);
-
     const drawerList = (
         <Box sx={{ height: "100%", bgcolor: '#3E103F' }}>
           <Box sx={{ width: 250,}} role="presentation" onClick={() => setToggleMenu(false)}>
@@ -62,6 +66,9 @@ const SideBar = ({ curUser, setCurUser }) => {
                 {filterUsers.map((user) => (
                 <ListItem key={user.id} disablePadding >
                     <ListItemButton sx={ user.id === curUser ? { m: '5px', backgroundColor: '#2B092A', color: 'white', borderRadius: '10px' } : {m: '5px',color: 'white'}} onClick={() => setCurUser(user.id)}>
+                        <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
+                          {user.user.charAt(0).toUpperCase()}
+                        </Avatar>
                         <ListItemText primary={user.user} />
                     </ListItemButton>
                 </ListItem>
