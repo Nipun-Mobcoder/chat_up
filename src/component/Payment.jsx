@@ -17,7 +17,7 @@ const Create_Order = gql`
 
 const VERIFY_PAYMENT = gql`
     mutation VerifyPayment($razorpayOrderId: String!, $razorpayPaymentId: String!, $razorpaySignature: String!, $to: String!) {
-        verifyPayment(razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, razorpaySignature: $razorpaySignature, to: $to, amount: $amount, currency: $currency)
+        verifyPayment(razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, razorpaySignature: $razorpaySignature, to: $to)
     }
 `;
 
@@ -122,7 +122,9 @@ export default function PaymentButton({ amount, currency, whom, setFormSent }) {
                                 context: { headers: { token, "x-apollo-operation-name": "1"} }
                             });
                             setFormSent(false);
-                        }
+                        },
+                        escape: false,
+                        backdropclose: false,
                     }
                 };
                 if (!window.Razorpay) {
@@ -132,7 +134,13 @@ export default function PaymentButton({ amount, currency, whom, setFormSent }) {
                       const rzpay = new window.Razorpay(options);
                       rzpay.open();
                     };
-                    script.onerror = () => alert("Failed to load Razorpay. Please try again.");
+                    script.onerror = async () => {
+                        await paymentFailFunction({
+                            variables: { paymentOrderId: order.id },
+                            context: { headers: { token, "x-apollo-operation-name": "1"} }
+                        });
+                        alert("Failed to load Razorpay. Please try again.");
+                    }
                     document.body.appendChild(script);
                   } else {
                     const rzpay = new window.Razorpay(options);

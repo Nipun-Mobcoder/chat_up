@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
 import { AttachFile, Payment } from '@mui/icons-material';
@@ -7,6 +7,8 @@ import axios from "axios";
 import PropTypes from 'prop-types';
 import PaymentForm from './component/PaymentForm';
 import PaymentButton from './component/Payment';
+import PaymentMessage from './component/PaymentMessage';
+// import PaymentMessage from './component/PaymentMessage';
 
 function isImage(url) {
   const cleanUrl = url.split('?')[0];
@@ -29,6 +31,8 @@ const SHOW_MESSAGE = gql`
             sender
             createdAt
             date
+            paymentAmount
+            currency
         }
     }
 `;
@@ -41,6 +45,8 @@ const SUBSCRIBE = gql`
             }
             message
             sender
+            paymentAmount
+            currency
         }
     }
 `;
@@ -208,7 +214,7 @@ function ChatComponent({curUser}) {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column', }}>
+    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column', width: '100%' }}>
       <Box
         sx={{
           flex: 1,
@@ -220,22 +226,69 @@ function ChatComponent({curUser}) {
         <Paper elevation={3} sx={{ p: 2, height: '100%', mt: '40px' }}>
           <Divider sx={{ mb: 2 }} />
           {messages.map((ms, index) => (
-            <Box key={index} sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: 'gray' }}>
-                {ms.sender} ({ms.date ?? ''}, {ms.createdAt})
-              </Typography>
-              <Typography variant="body1">{!ms.file && ms.message}</Typography>
-              {ms?.file ? (
-                !isImage(ms.file.url) ? (
-                  <video width="400" controls>
-                    <source src={ms.file.url} />
-                    Your browser does not support the video tag.
-                  </video>
+            <Box
+            key={index}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              my: 2,
+              maxWidth: '100%', // Ensures the message doesn't exceed the parent's width
+            }}
+          >
+            <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
+              {ms.sender.charAt(0).toUpperCase()}
+            </Avatar>
+            <Stack sx={{ maxWidth: '80%' }}> {/* Stack helps organize text and media */}
+              {!ms.paymentAmount && (
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                  {ms.sender} ({ms.date ?? ''}, {ms.createdAt})
+                </Typography>
+              )}
+              {!ms.file && !ms.paymentAmount && 
+                <Box
+                  sx={{
+                    maxWidth: '100%',
+                    bgcolor: "#e1f5fe",
+                    padding: "8px 12px",
+                    borderRadius: "12px",
+                    margin: "8px 0",
+                    wordWrap: "break-word",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "break-word",
+                  }}
+                >
+                  <Typography variant="body1">
+                    {!ms.file && !ms.paymentAmount && ms.message}
+                  </Typography>
+                </Box>
+              }
+              {ms.file && (
+                isImage(ms.file.url) ? (
+                  <img
+                    src={ms.file.url}
+                    alt="Uploaded file"
+                    style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
+                  />
                 ) : (
-                  <img src={ms.file.url} alt="Uploaded file" />
+                  <video
+                    src={ms.file.url}
+                    controls
+                    style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
+                  />
                 )
-              ) : null}
-            </Box>
+              )}
+              {ms.paymentAmount && (
+                <PaymentMessage
+                  userName={ms.sender}
+                  date={ms.date ?? ''}
+                  createdAt={ms.createdAt ?? ''}
+                  amount={ms.paymentAmount}
+                  currency={ms.currency}
+                />
+              )}
+            </Stack>
+          </Box>
+          
           ))}
           {showForm && <PaymentForm onClose={onClose} open={showForm} formData={formData} setFormData={setFormData} setFormSent={setFormSent} />}
           {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom} setFormSent={setFormSent} />}
