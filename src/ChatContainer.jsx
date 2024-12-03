@@ -13,7 +13,7 @@ const ChatContainer = () => {
     }, [navigate]);
     
     
-    const [curUser, setCurUser] = useState('')
+    const [curUser, setCurUser] = useState()
     
     return (
         <>

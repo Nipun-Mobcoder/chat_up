@@ -97,17 +97,17 @@ function ChatComponent({curUser}) {
   });
 
   const { data: msg, loading: loader } = useQuery(SHOW_MESSAGE, {
-    variables: { sender: curUser },
+    variables: { sender: curUser.id },
     context: { headers: { token } }
   });
 
   const { data: subscriptionData } = useSubscription(SUBSCRIBE, {
-    variables: { tokenId: token, userId: curUser }
+    variables: { tokenId: token, userId: curUser.id }
   });
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const reciever = curUser;
+  const reciever = curUser.id;
 
   const [showForm, setShowForm] = useState(false);
   const [formSent, setFormSent] = useState(false);
@@ -341,7 +341,7 @@ function ChatComponent({curUser}) {
 }
 
 ChatComponent.propTypes = {
-    curUser: PropTypes.string.isRequired,
+    curUser: PropTypes.object.isRequired,
 };
 
 export default ChatComponent;

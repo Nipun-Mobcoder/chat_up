@@ -39,12 +39,12 @@ const SideBar = ({ curUser, setCurUser }) => {
     }
 
     useEffect(()=> {
-      if(msg && !curUser && filterUsers) setCurUser(filterUsers[0].id);
-    }, [curUser, filterUsers, msg, setCurUser])
+      if(!curUser && filterUsers) setCurUser(filterUsers[0]);
+    }, [curUser, filterUsers, setCurUser])
 
     if(error) return <div>Looks like something went wrong.</div>
 
-    if(loader) {
+    if(loader || !curUser ) {
       return <Box 
         sx={{ 
           display: 'flex', 
@@ -65,7 +65,7 @@ const SideBar = ({ curUser, setCurUser }) => {
             <List>
                 {filterUsers.map((user) => (
                 <ListItem key={user.id} disablePadding >
-                    <ListItemButton sx={ user.id === curUser ? { m: '5px', backgroundColor: '#2B092A', color: 'white', borderRadius: '10px' } : {m: '5px',color: 'white'}} onClick={() => setCurUser(user.id)}>
+                    <ListItemButton sx={ user.id === curUser.id ? { m: '5px', backgroundColor: '#2B092A', color: 'white', borderRadius: '10px' } : {m: '5px',color: 'white'}} onClick={() => setCurUser(user)}>
                         <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
                           {user.user.charAt(0).toUpperCase()}
                         </Avatar>
@@ -83,11 +83,47 @@ const SideBar = ({ curUser, setCurUser }) => {
         <Box display="flex" justifyContent="space-between" alignItems="center">
         <IconButton onClick={() => setToggleMenu(!toggleMenu)} sx={{ color: 'white' }}>
           <MenuIcon />
-          <Typography variant='h5' color='white' sx={{ ml: '10px' }}>Chat Up</Typography>
+          <Typography variant='h5' color='white' sx={{ ml: '10px' }}>{ curUser ? curUser.user : "Chat Up"}</Typography>
         </IconButton>
-        <IconButton onClick={(event)=> setAnchorEl(event.currentTarget)} sx={{ color: 'white', mr: '50px' }}>
-            <Typography variant='h6'>{localStorage.getItem('name')}</Typography>
+        <IconButton
+          onClick={(event) => setAnchorEl(event.currentTarget)}
+          sx={{
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px',
+            borderRadius: '25px',
+            transition: 'background-color 0.3s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            },
+            bgcolor: 'white',
+            mr: '50px',
+          }}
+        >
+          <Avatar
+            sx={{
+              bgcolor: 'primary.main',
+              width: 40,
+              height: 40,
+              fontSize: '1.2rem',
+              marginRight: 1.5,
+            }}
+          >
+            {localStorage.getItem('name')?.charAt(0).toUpperCase()}
+          </Avatar>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 500,
+              color: 'black',
+              textShadow: '0px 1px 2px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {localStorage.getItem('name')}
+          </Typography>
         </IconButton>
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -107,7 +143,7 @@ const SideBar = ({ curUser, setCurUser }) => {
 }
 
 SideBar.propTypes = {
-    curUser: PropTypes.string.isRequired,
+    curUser: PropTypes.object,
     setCurUser: PropTypes.func.isRequired,
 };
 
