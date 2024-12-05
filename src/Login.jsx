@@ -20,6 +20,7 @@ const GET_TOKEN = gql `
       name
       email
       phoneNumber
+      id
     }
   }
 `
@@ -50,6 +51,7 @@ function Login() {
       localStorage.setItem('name', data.login.name);
       localStorage.setItem('email', data.login.email);
       localStorage.setItem('phoneNumber', data.login.phoneNumber);
+      localStorage.setItem('id', data.login.id);
       navigate('/chat');
     }
   }, [data, navigate]);

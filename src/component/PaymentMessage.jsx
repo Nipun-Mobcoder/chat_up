@@ -7,7 +7,7 @@ const PaymentMessage = ({ userName, date, createdAt, amount, currency }) => {
 
       <Paper elevation={2} sx={{ p: 2,  maxWidth: "300px" }}>
         <Typography variant="body1" fontWeight="bold">
-          {userName} paid {currency} {amount}
+          {userName} paid {currency} {amount/100}
         </Typography>
         <Typography variant="caption" color="text.secondary">
             {userName} ({date ?? ''}, {createdAt})

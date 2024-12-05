@@ -32,6 +32,7 @@ const SUBSCRIBE = gql`
             }
             message
             sender
+            date
         }
     }
 `;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import PaymentForm from './component/PaymentForm';
 import PaymentButton from './component/Payment';
 import PaymentMessage from './component/PaymentMessage';
+// import decryptMessage from './helper/decryptMessage';
 
 function isImage(url) {
   const cleanUrl = url.split('?')[0];
@@ -47,6 +48,7 @@ const SUBSCRIBE = gql`
             sender
             paymentAmount
             currency
+            date
         }
     }
 `;
@@ -70,6 +72,12 @@ const COMPLETE_MULTIPART = gql`
     }
 `;
 
+const DECRYPT_MESSAGE = gql`
+    query Query($encryptedText: String!, $sender: Boolean!) {
+      decrypt(encryptedText: $encryptedText, sender: $sender)
+    }
+`
+
 
 function ChatComponent({curUser}) {
   const navigate = useNavigate();
@@ -90,7 +98,11 @@ function ChatComponent({curUser}) {
 
   const [generate] = useLazyQuery(GENERATE_MULTIPART, {
     context: { headers: { token, "x-apollo-operation-name": "1" } }
-  });
+  }); 
+
+  const [decrypt] = useLazyQuery(DECRYPT_MESSAGE, {
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
+  }); 
 
   const [complete] = useMutation(COMPLETE_MULTIPART, {
     context: { headers: { token, "x-apollo-operation-name": "1" } }
@@ -127,18 +139,47 @@ function ChatComponent({curUser}) {
   };
 
   useEffect(() => {
-    if (msg) {
-      setMessages(msg.showUserMessage);
-    }
+      if (msg) {
+        setMessages(msg.showUserMessage);
+      }
   }, [msg]);
+
+  const decryptFunction = useCallback(
+    async (message, sender) => {
+      try {
+        const send = sender === localStorage.getItem('name')
+        const { data } = await decrypt({
+          variables: {
+            sender: send,
+            encryptedText: message,
+          },
+          context: {
+            headers: { token, "x-apollo-operation-name": "1" },
+          },
+        });
+        return data?.decrypt || message;
+      } catch (error) {
+        console.error("Decryption error:", error);
+        return message;
+      }
+    },
+    [decrypt, token]
+  );
 
   useEffect(() => {
     if (subscriptionData && subscriptionData.showUsersMessages) {
-        const date = new Date();
-        const newMessage = {...subscriptionData.showUsersMessages, createdAt: `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`};
+      const date = new Date();
+      (async () => {
+        const decryptedMessage = await decryptFunction(subscriptionData.showUsersMessages.message, true);
+        const newMessage = {
+          ...subscriptionData.showUsersMessages,
+          message: decryptedMessage,
+          createdAt: `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`,
+        };
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+      })();
     }
-  }, [subscriptionData]);
+  }, [decryptFunction, subscriptionData]);
 
   if (loader) {
     return <Box 
@@ -256,9 +297,9 @@ function ChatComponent({curUser}) {
                     margin: "8px 0",
                     wordWrap: "break-word",
                     whiteSpace: "pre-wrap",
-                    overflowWrap: "break-word",
+                    overflowWrap: "break-word"
                   }}
-                >
+                > 
                   <Typography variant="body1">
                     {!ms.file && !ms.paymentAmount && ms.message}
                   </Typography>
@@ -293,7 +334,7 @@ function ChatComponent({curUser}) {
           
           ))}
           {showForm && <PaymentForm onClose={onClose} open={showForm} formData={formData} setFormData={setFormData} setFormSent={setFormSent} />}
-          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={formData.toWhom} setFormSent={setFormSent} />}
+          {formSent && <PaymentButton amount={formData.amount} currency={formData.currency} whom={curUser.id} setFormSent={setFormSent} />}
         </Paper>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderTop: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
           <input
