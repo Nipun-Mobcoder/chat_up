@@ -15,7 +15,7 @@ const CUR_USER = gql`
     }
 `;
 
-const SideBar = ({ curUser, setCurUser }) => {
+const SideBar = ({ curUser, setCurUser, setError }) => {
     const [toggleMenu, setToggleMenu] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
@@ -42,8 +42,7 @@ const SideBar = ({ curUser, setCurUser }) => {
       if(!curUser && filterUsers) setCurUser(filterUsers[0]);
     }, [curUser, filterUsers, setCurUser])
 
-    if(error) return <div>Looks like something went wrong.</div>
-
+    if(error) setError(error)
     if(loader || !curUser ) {
       return <Box 
         sx={{ 
@@ -145,6 +144,7 @@ const SideBar = ({ curUser, setCurUser }) => {
 SideBar.propTypes = {
     curUser: PropTypes.object,
     setCurUser: PropTypes.func.isRequired,
+    setError: PropTypes.func
 };
 
 export default SideBar

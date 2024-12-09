@@ -9,11 +9,16 @@ import PropTypes from 'prop-types';
 import PaymentForm from './component/PaymentForm';
 import PaymentButton from './component/Payment';
 import PaymentMessage from './component/PaymentMessage';
-// import decryptMessage from './helper/decryptMessage';
+import PdfComponent from './component/PdfComponent';
 
 function isImage(url) {
   const cleanUrl = url.split('?')[0];
   return /\.(jpg|jpeg|png|gif|bmp|svg)$/i.test(cleanUrl);
+}
+
+function isPdf(url) {
+  const cleanUrl = url.split('?')[0];
+  return /\.(pdf)$/i.test(cleanUrl);
 }
 
 const SEND_MESSAGE = gql`
@@ -313,11 +318,16 @@ function ChatComponent({curUser}) {
                     style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
                   />
                 ) : (
-                  <video
-                    src={ms.file.url}
-                    controls
-                    style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
-                  />
+                  (
+                   isPdf(ms.file.url) ? (
+                    <PdfComponent pdfUrl={ms.file.url} />
+                   ): 
+                   <video
+                     src={ms.file.url}
+                     controls
+                     style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
+                   />
+                  )
                 )
               )}
               {ms.paymentAmount && (
