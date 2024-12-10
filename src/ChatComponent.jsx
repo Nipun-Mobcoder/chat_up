@@ -82,7 +82,14 @@ const DECRYPT_MESSAGE = gql`
       decrypt(encryptedText: $encryptedText, sender: $sender)
     }
 `
-
+const CHECK_FEATURE = gql`
+  query Query($to: ID!) {
+    checkFeature(to: $to) {
+      payment
+      file
+    }
+  }
+`
 
 function ChatComponent({curUser}) {
   const navigate = useNavigate();
@@ -111,6 +118,11 @@ function ChatComponent({curUser}) {
 
   const [complete] = useMutation(COMPLETE_MULTIPART, {
     context: { headers: { token, "x-apollo-operation-name": "1" } }
+  });
+
+  const { data, loading } = useQuery(CHECK_FEATURE, {
+    variables: { to: curUser.id },
+    context: { headers: { token } }
   });
 
   const { data: msg, loading: loader } = useQuery(SHOW_MESSAGE, {
@@ -186,7 +198,7 @@ function ChatComponent({curUser}) {
     }
   }, [decryptFunction, subscriptionData]);
 
-  if (loader) {
+  if (loader || loading) {
     return <Box 
       sx={{ 
         display: 'flex', 
@@ -366,14 +378,20 @@ function ChatComponent({curUser}) {
             style={{ display: 'none' }}
             id="file-input"
           />
-          <label htmlFor="file-input">
-            <IconButton component="span" sx={{ mr: 2 }}>
-              <AttachFile />
+          {
+            data?.checkFeature?.file &&
+            <label htmlFor="file-input">
+              <IconButton component="span" sx={{ mr: 2 }}>
+                <AttachFile />
+              </IconButton>
+            </label>
+          }
+          {
+            data?.checkFeature?.payment &&
+            <IconButton component="span" sx={{ mr: 2 }} onClick={handleToggleForm}>
+                <Payment />
             </IconButton>
-          </label>
-          <IconButton component="span" sx={{ mr: 2 }} onClick={handleToggleForm}>
-              <Payment />
-          </IconButton>
+          }
           <TextField
             fullWidth
             variant="outlined"
