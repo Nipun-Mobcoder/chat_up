@@ -8,8 +8,9 @@ const PdfComponent = ({ pdfUrl }) => {
             src={googleViewerUrl}
             width="100%"
             height="250px"
-            title="Google Docs Viewer"
+            title="Docs Viewer"
             style={{ border: 'none' }}
+            onError={(e) => e.target.src = pdfUrl}
         ></iframe>
     );
 }
@@ -18,4 +19,4 @@ PdfComponent.propTypes = {
     pdfUrl: PropTypes.string.isRequired,
 };
 
-export default PdfComponent
+export default PdfComponent;

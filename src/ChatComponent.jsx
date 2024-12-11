@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
-import { AttachFile, Payment } from '@mui/icons-material';
+import { AttachFile, MapOutlined, Payment } from '@mui/icons-material';
 import axios from "axios";
 import PropTypes from 'prop-types';
+// import { APIProvider } from "@vis.gl/react-google-maps";
+
 
 import PaymentForm from './component/PaymentForm';
 import PaymentButton from './component/Payment';
 import PaymentMessage from './component/PaymentMessage';
 import PdfComponent from './component/PdfComponent';
+import CustomMap from './component/CustomMap';
+// import PdfViewer from './component/PdfViewer';
 
 function isImage(url) {
   const cleanUrl = url.split('?')[0];
@@ -92,6 +96,8 @@ const CHECK_FEATURE = gql`
 `
 
 function ChatComponent({curUser}) {
+
+  
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -146,6 +152,14 @@ function ChatComponent({curUser}) {
     currency: "",
     toWhom: reciever.toString() || "",
   });
+
+  const [isMapOpen, setIsMapOpen] = useState(false);
+
+  const [markerLocation, setMarkerLocation] = useState({
+    lat: 28.615665435791016,
+    lng: 77.37452697753906,
+  });
+  console.log(markerLocation)
 
   const onClose = () => {
     setShowForm(false)
@@ -392,6 +406,9 @@ function ChatComponent({curUser}) {
                 <Payment />
             </IconButton>
           }
+          <IconButton component="span" sx={{ mr: 2 }} onClick={() => setIsMapOpen(true)}>
+            <MapOutlined />
+          </IconButton>
           <TextField
             fullWidth
             variant="outlined"
@@ -405,6 +422,14 @@ function ChatComponent({curUser}) {
           </Button>
         </Box>
       </Box>
+      <Dialog open={isMapOpen} onClose={() => setIsMapOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Map View</DialogTitle>
+        <DialogContent>
+          {/* <APIProvider apiKey="AIzaSyC3CwaC4wN0uhtGcyELwxdc5SiC_7YQU0A"> */}
+            <CustomMap markerLocation={markerLocation} setMarkerLocation={setMarkerLocation} />
+          {/* </APIProvider> */}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

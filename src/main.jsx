@@ -8,6 +8,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import ChatContainer from './ChatContainer.jsx';
+import "leaflet/dist/leaflet.css";
 
 const uploadLink = createUploadLink({
   uri: 'http://localhost:5000/graphql',
