@@ -425,9 +425,7 @@ function ChatComponent({curUser}) {
       <Dialog open={isMapOpen} onClose={() => setIsMapOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Map View</DialogTitle>
         <DialogContent>
-          {/* <APIProvider apiKey="AIzaSyC3CwaC4wN0uhtGcyELwxdc5SiC_7YQU0A"> */}
             <CustomMap markerLocation={markerLocation} setMarkerLocation={setMarkerLocation} />
-          {/* </APIProvider> */}
         </DialogContent>
       </Dialog>
     </Box>
