@@ -13,11 +13,11 @@ const MapViewer = ({ markerLocation }) => {
       <MapContainer
         center={markerLocation}
         zoom={13}
+        dragging={false}
         style={{ height: "100%", width: "100%", borderRadius: "20px" }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
         <Marker position={markerLocation}>

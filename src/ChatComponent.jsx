@@ -356,7 +356,7 @@ function ChatComponent({curUser}) {
                   <img
                     src={ms.file.url}
                     alt="Uploaded file"
-                    style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
+                    style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px', maxHeight: '200px' }}
                   />
                 ) : (
                   (
@@ -366,7 +366,7 @@ function ChatComponent({curUser}) {
                    <video
                      src={ms.file.url}
                      controls
-                     style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px' }}
+                     style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px', height: '200px' }}
                    />
                   )
                 )
@@ -381,9 +381,11 @@ function ChatComponent({curUser}) {
                 />
               )}
               {ms.location && (
-                <MapViewer
-                  markerLocation={ms.location}
-                />
+                <Box sx={{ cursor: 'pointer' }} onClick={() => { setMarkerLocation(ms.location); setIsMapOpen(true) }}>
+                  <MapViewer
+                    markerLocation={ms.location}
+                  />
+                </Box>
               )}
             </Stack>
           </Box>
