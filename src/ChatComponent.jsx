@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Divider, CircularProgress, IconButton, Avatar, Stack, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { gql, useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/client';
-import { AttachFile, MapOutlined, Payment } from '@mui/icons-material';
+import { AttachFile, Close, MapOutlined, Payment } from '@mui/icons-material';
 import axios from "axios";
 import PropTypes from 'prop-types';
 // import { APIProvider } from "@vis.gl/react-google-maps";
@@ -13,6 +13,7 @@ import PaymentButton from './component/Payment';
 import PaymentMessage from './component/PaymentMessage';
 import PdfComponent from './component/PdfComponent';
 import CustomMap from './component/CustomMap';
+import MapViewer from './component/MapViewer';
 // import PdfViewer from './component/PdfViewer';
 
 function isImage(url) {
@@ -26,8 +27,8 @@ function isPdf(url) {
 }
 
 const SEND_MESSAGE = gql`
-  mutation message($to: ID!, $message: String, $file: Upload) {
-    sendMessage(to: $to, message: $message, file: $file)
+  mutation message($to: ID!, $message: String, $file: Upload, $location: Locate) {
+    sendMessage(to: $to, message: $message, file: $file, location: $location)
   }
 `;
 
@@ -43,6 +44,10 @@ const SHOW_MESSAGE = gql`
             date
             paymentAmount
             currency
+            location {
+              lng
+              lat
+            }
         }
     }
 `;
@@ -58,6 +63,10 @@ const SUBSCRIBE = gql`
             paymentAmount
             currency
             date
+            location {
+              lng
+              lat
+            } 
         }
     }
 `;
@@ -159,7 +168,6 @@ function ChatComponent({curUser}) {
     lat: 28.615665435791016,
     lng: 77.37452697753906,
   });
-  console.log(markerLocation)
 
   const onClose = () => {
     setShowForm(false)
@@ -224,6 +232,13 @@ function ChatComponent({curUser}) {
     >
       <CircularProgress />
     </Box>;
+  }
+
+  const handleSend = () => {
+    mutateFunction({
+      variables: { to: reciever, message: '', file: null, location: markerLocation },
+      context: { headers: { token, "x-apollo-operation-name": "1"} }
+    });
   }
 
   const handleSendMessage = () => {
@@ -318,7 +333,7 @@ function ChatComponent({curUser}) {
                   {ms.sender} ({ms.date ?? ''}, {ms.createdAt})
                 </Typography>
               )}
-              {!ms.file && !ms.paymentAmount && 
+              {!ms.file && !ms.paymentAmount && !ms.location && 
                 <Box
                   sx={{
                     maxWidth: '100%',
@@ -363,6 +378,11 @@ function ChatComponent({curUser}) {
                   createdAt={ms.createdAt ?? ''}
                   amount={ms.paymentAmount}
                   currency={ms.currency}
+                />
+              )}
+              {ms.location && (
+                <MapViewer
+                  markerLocation={ms.location}
                 />
               )}
             </Stack>
@@ -423,10 +443,31 @@ function ChatComponent({curUser}) {
         </Box>
       </Box>
       <Dialog open={isMapOpen} onClose={() => setIsMapOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Map View</DialogTitle>
+        <DialogTitle>Map View
+        <IconButton
+          aria-label="close"
+          onClick={() => setIsMapOpen(false)}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+          }}
+        >
+          <Close />
+        </IconButton>
+        </DialogTitle>
         <DialogContent>
             <CustomMap markerLocation={markerLocation} setMarkerLocation={setMarkerLocation} />
         </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => handleSend(markerLocation)}
+            variant="contained"
+            color="primary"
+          >
+            Send
+          </Button>
+      </DialogActions>
       </Dialog>
     </Box>
   );
