@@ -100,6 +100,7 @@ const CHECK_FEATURE = gql`
     checkFeature(to: $to) {
       payment
       file
+      map
     }
   }
 `
@@ -239,6 +240,7 @@ function ChatComponent({curUser}) {
       variables: { to: reciever, message: '', file: null, location: markerLocation },
       context: { headers: { token, "x-apollo-operation-name": "1"} }
     });
+    setIsMapOpen(false)
   }
 
   const handleSendMessage = () => {
@@ -428,9 +430,12 @@ function ChatComponent({curUser}) {
                 <Payment />
             </IconButton>
           }
-          <IconButton component="span" sx={{ mr: 2 }} onClick={() => setIsMapOpen(true)}>
-            <MapOutlined />
-          </IconButton>
+          {
+            data?.checkFeature?.map &&
+            <IconButton component="span" sx={{ mr: 2 }} onClick={() => setIsMapOpen(true)}>
+              <MapOutlined />
+            </IconButton>
+          }
           <TextField
             fullWidth
             variant="outlined"

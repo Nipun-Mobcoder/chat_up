@@ -8,7 +8,6 @@ const handleDragEnd = (event) => {
     setMarkerLocation({ lat, lng });
   };
 
-
   return (
     <div style={{
       height: "500px",
