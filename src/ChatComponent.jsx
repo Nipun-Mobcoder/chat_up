@@ -14,6 +14,7 @@ import PaymentMessage from './component/PaymentMessage';
 import PdfComponent from './component/PdfComponent';
 import CustomMap from './component/CustomMap';
 import MapViewer from './component/MapViewer';
+import Video from './component/Video';
 // import PdfViewer from './component/PdfViewer';
 
 function isImage(url) {
@@ -24,6 +25,11 @@ function isImage(url) {
 function isPdf(url) {
   const cleanUrl = url.split('?')[0];
   return /\.(pdf)$/i.test(cleanUrl);
+}
+
+function isMP4(url) {
+  const cleanUrl = url.split('?')[0];
+  return /\.(mp4)$/i.test(cleanUrl);
 }
 
 const SEND_MESSAGE = gql`
@@ -105,6 +111,12 @@ const CHECK_FEATURE = gql`
   }
 `
 
+const SAVE_SEGMENT = gql`
+  mutation Mutation($presignedUrl: String, $to: String, $fileName: String) {
+    saveSegment(presignedUrl: $presignedUrl, to: $to, fileName: $fileName)
+  }
+`
+
 function ChatComponent({curUser}) {
 
   
@@ -134,7 +146,12 @@ function ChatComponent({curUser}) {
 
   const [complete] = useMutation(COMPLETE_MULTIPART, {
     context: { headers: { token, "x-apollo-operation-name": "1" } }
+  }); 
+
+  const [saveSegment] = useMutation(SAVE_SEGMENT, {
+    context: { headers: { token, "x-apollo-operation-name": "1" } }
   });
+
 
   const { data, loading } = useQuery(CHECK_FEATURE, {
     variables: { to: curUser.id },
@@ -295,8 +312,21 @@ function ChatComponent({curUser}) {
           });
         });
 
-        await complete({
-          variables: { fileName: file.name, uploadId: startData.startMultipart, parts, to: reciever },
+        const val = await complete({
+            variables: { fileName: file.name, uploadId: startData.startMultipart, parts, to: reciever },
+          });
+
+        const fileURL = val.data?.complete;
+
+        const data = await axios.post("http://localhost:8000/uploadfileS3",
+          { presignedUrl: fileURL, fileName: file.name },
+          {headers: { "authorization" : localStorage.getItem("token") || "", }}
+        );
+        
+        const presignedUrl = data.data.videoUrl;
+
+        await saveSegment({
+          variables: { fileName: file.name, presignedUrl, to: reciever },
         });
       }
     }
@@ -365,11 +395,13 @@ function ChatComponent({curUser}) {
                    isPdf(ms.file.url) ? (
                     <PdfComponent pdfUrl={ms.file.url} />
                    ): 
-                   <video
-                     src={ms.file.url}
-                     controls
-                     style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px', height: '200px' }}
-                   />
+                    isMP4(ms.file.url) ?
+                     <video
+                       src={ms.file.url}
+                       controls
+                       style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '8px', height: '200px' }}
+                     />:
+                    <Video videoLink={ms.file.url} />
                   )
                 )
               )}
